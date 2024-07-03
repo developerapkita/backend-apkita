@@ -5,25 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Profile extends Model
+class Notification extends Model
 {
     use HasFactory;
     protected $fillable = [
         'user_id',
-        'nik',
-        'address',
-        'gender',
-        'birth_city',
-        'birth_date',
-        'phone',
-        'profile_image',
-        'saldo',
-        'referal_code'
+        'title',
+        'content',
+        'type',
+        'data',
+        'is_read',
     ];
-    public function user():BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
+    
     /**
      * Kita override boot method
      *
