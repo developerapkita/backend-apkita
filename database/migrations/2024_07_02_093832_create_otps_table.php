@@ -14,8 +14,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('otps', function (Blueprint $table) {
-            $table->uuid('otp_id')->primary();
-            $table->foreignUlid('user_id');
+            $table->id('id')->primary();
+            $table->integer('user_id');
+            $table->string('email');
+            $table->string('phone');
             $table->integer('otp');
             $table->dateTime('expired_at');
             $table->timestamps();
