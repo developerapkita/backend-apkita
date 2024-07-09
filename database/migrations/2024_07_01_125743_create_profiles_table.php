@@ -15,11 +15,14 @@ return new class extends Migration
     public function up()
     {
         Schema::create('profiles', function (Blueprint $table) {
-            $table->id('id')->primary();
+            $table->id('id');
             $table->integer('user_id');
             $table->uuid('slug')->unique()->default(DB::raw('(UUID())'));
             $table->string('nik',16)->unique();
             $table->string('address');
+            $table->integer('province');
+            $table->integer('regencies');
+            $table->integer('districts');
             $table->enum('gender',['L','P']);
             $table->date('birth_date');
             $table->string('image');

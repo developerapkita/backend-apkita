@@ -15,16 +15,16 @@ return new class extends Migration
     public function up()
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id('id')->primary();
+            $table->id('id');
             $table->uuid('slug')->unique()->default(DB::raw('(UUID())'));
             $table->string('name');
-            $table->string('phone')->unique();
-            $table->string('email')->unique();
+            $table->string('phone')->unique()->nullable();
+            $table->string('email')->unique()->nullable();
             $table->string('password');
             $table->dateTime('email_verified_at')->nullable();
-            $table->string('pin_transaction');
-            $table->integer('role_account')->default(0);
-            $table->boolean('status_account');
+            $table->string('pin_transaction')->nullable();
+            $table->integer('role');
+            $table->boolean('status');
             $table->rememberToken();
             $table->timestamps();
         });
