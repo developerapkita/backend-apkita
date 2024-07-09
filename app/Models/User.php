@@ -22,8 +22,8 @@ class User extends Authenticatable
         'email',
         'password',
         'pin_transaction',
-        'role_account',
-        'status_account',
+        'role',
+        'status',
     ];
     public function profile(): HasOne
     {
@@ -36,6 +36,10 @@ class User extends Authenticatable
     public function roleAccount(): BelongsTo
     {
         return $this->belongsTo(RoleAccount::class);
+    }
+    public function userToken(): HasOne
+    {
+        return $this->hasOne(UserToken::class);
     }
     /**
      * The attributes that should be hidden for serialization.
