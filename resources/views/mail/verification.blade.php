@@ -8,9 +8,9 @@
 <body>
     <p>
     Halo, {{$details['name']}}!<br>
-    Berikut OTP Lupa Kata Sandi akun APKITA.<br>
+    Berikut OTP verifikasi akun APKITA.<br>
     OTP : {{$details['otp']}}<br>
-    Silahkan masukan OTP Anda dan ganti kata sandi dengan kata sandi baru.<br>
+    Silahkan masukan OTP Anda untuk memverifikasi akun APKITA<br>
     </p>
 </body>
 

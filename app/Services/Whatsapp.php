@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Helpers\CURL;
+use App\Helper\CURL;
 
 class Whatsapp
 {
