@@ -28,3 +28,6 @@ Route::get('/data-province', [AuthController::class, 'province']);
 Route::get('/data-regency', [AuthController::class, 'regency']);
 Route::get('/data-district', [AuthController::class, 'district']);
 Route::POST('/token_validate', [AuthController::class, 'token_validate']);
+Route::POST('/profile-complete', [AuthController::class, 'profile_complete']);
+Route::POST('/set-pin', [AuthController::class, 'set_pin']);
+Route::POST('/pin-validate', [AuthController::class, 'pin_validate']);
