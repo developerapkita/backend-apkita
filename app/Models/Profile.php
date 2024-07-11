@@ -12,6 +12,9 @@ class Profile extends Model
         'user_id',
         'nik',
         'address',
+        'province',
+        'regencies',
+        'district',
         'gender',
         'birth_date',
         'image',
@@ -24,6 +27,6 @@ class Profile extends Model
     ];
     public function user():BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
