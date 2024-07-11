@@ -17,6 +17,7 @@ use App\Models\UserToken;
 use App\Models\Provinces;
 use App\Models\Regency;
 use App\Models\District;
+use App\Models\Profile;
 use Mail;
 use App\Services\Whatsapp;
 
@@ -28,7 +29,7 @@ class AuthController extends Controller
             'phone'=> ['required'],
             'name' => ['required'],
             'password' => ['required'],
-            'otp'=>['required']
+            'otp'=>['required'],
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -52,9 +53,15 @@ class AuthController extends Controller
         }
         $password = $request->password;
         $role = RoleAccount::where('name_role',$request->role)->first();
+        $referalCheck = Profile::where('referal_code',$request->referal_code)->first();
+        if($referalCheck == null){
+            $referal_code = null;
+        }else{
+            $referal_code = $request->referal_code;
+        }
         DB::beginTransaction();
         try {
-            $account = new User;
+            $account = new User();
             $account->name         = $name;
             $account->email        = $email;
             $account->phone        = $phone;
@@ -63,6 +70,11 @@ class AuthController extends Controller
             $account->role         = $role->id;
             $account->status       = 1;
             $account->save();
+
+            $profile = new Profile();
+            $profile->user_id = $account->id;
+            $profile->referal_code_inviter = $referal_code;
+            $profile->save();
 
             DB::commit();
         } catch (\Exception $e) {
@@ -83,7 +95,7 @@ class AuthController extends Controller
         $rules = [
             'name' => ['required'],
             'email' => ['required'],
-            'phone' => ['required']
+            'phone' => ['required'],
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -197,6 +209,13 @@ class AuthController extends Controller
                 $userToken->save();
 
                 $userAuth->token = $token;
+                if($userAuth->pin_transaction == null){
+                    return response()->json([
+                    'status' => 'success',
+                    'message'=> 'PIN Not Set',
+                    'data' =>  $userAuth
+                ], 200);
+                }
                 return response()->json([
                     'status' => 'success',
                     'data' =>  $userAuth
@@ -204,14 +223,14 @@ class AuthController extends Controller
             }
         }else
         if($userphone != null){
-            $roleCheck = Role::where('name_role',$userphone->role)->first();
+            $roleCheck = RoleAccount::where('id',$userphone->role)->first();
             if($roleCheck == null){
                 return response()->json([
                     'status' => 'error',
                     'message' => 'invalid_user'
                 ], 404);
             }
-            if(Auth::attemp(['phone'=> $username, 'password' => $password])){
+            if(Auth::attempt(['phone'=> $username, 'password' => $password])){
                 $token = Str::random(40);
                 $userAuth = Auth::user();
 
@@ -221,6 +240,13 @@ class AuthController extends Controller
                 $userToken->save();
 
                 $userAuth->token = $token;
+                if($userAuth->pin_transaction == null){
+                    return response()->json([
+                    'status' => 'success',
+                    'message'=> 'PIN_Not_Set',
+                    'data' =>  $userAuth
+                ], 200);
+                }
                 return response()->json([
                     'status' => 'success',
                     'data' =>  $userAuth
@@ -277,7 +303,7 @@ class AuthController extends Controller
         $expiredToken =  UserToken::where("user_id",  $userToken->user_id)
             ->update(["expired" => 1]);
         $token =  Str::random(40);
-        $user = User::where('id',$userToken->user_id)->first();;
+        $user = User::with('profile')->where('id',$userToken->user_id)->first();;
 
         $userToken = new UserToken();
         $userToken->user_id = $user->id;
@@ -290,5 +316,85 @@ class AuthController extends Controller
             'status' => 'success',
             'data' =>  $user
         ], 200);
+    }
+
+    public function profile_complete(Request $request){
+        $rules = [
+            'date_birth'=> ['required'],
+            'gender'=> ['required'],
+            'province'=> ['required'],
+            'regencies'=> ['required'],
+            'district'=> ['required'],
+            'address'=> ['required'],
+        ];
+        $validator = Validator::make($request->all(),$rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->messages()->first()
+            ], 404);
+        }
+        $profile = User::with('profile')->where('slug',$request->id)->first();
+        $user = $profile->profile;
+
+        $user->birth_date = $request->date_birth;
+        $user->gender = $request->gender;
+        $user->province = $request->province;
+        $user->regencies = $request->regencies;
+        $user->districts = $request->district;
+        $user->address = $request->address;
+        $user->save();
+
+        return response()->json([
+            'status' => 'succcess',
+            'message' => 'Success',
+            'data' => $profile
+        ], 404);
+    }
+    public function set_pin(Request $request){
+        $rules = [
+            'pin'=> ['required'],
+        ];
+        $validator = Validator::make($request->all(),$rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->messages()->first()
+            ], 404);
+        }
+
+        $user = User::where('slug',$request->id)->first();
+        $user->pin_transaction = Hash::make($request->pin);
+        $user->save();
+        return response()->json([
+            'status' => 'succcess',
+            'message' => 'Success',
+            'data' => $user
+        ], 200);
+    }
+    public function pin_validate(Request $request){
+        $rules = [
+            'pin'=> ['required'],
+        ];
+        $validator = Validator::make($request->all(),$rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->messages()->first()
+            ], 404);
+        }
+
+        $user = User::where('slug',$request->id)->first();
+        if(Hash::check($request->pin,$user->pin_transaction)==false){
+            return response()->json([
+             'status' => 'error',
+             'message' => 'pin_invalid',
+        ], 404);
+        }
+        return response()->json([
+             'status' => 'success',
+             'message' => 'pin_valid',
+             'data' => $user
+        ], 404);
     }
 }
