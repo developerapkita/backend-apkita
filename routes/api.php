@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\ImportDataController;
 
 /*
@@ -31,3 +32,7 @@ Route::POST('/token_validate', [AuthController::class, 'token_validate']);
 Route::POST('/profile-complete', [AuthController::class, 'profile_complete']);
 Route::POST('/set-pin', [AuthController::class, 'set_pin']);
 Route::POST('/pin-validate', [AuthController::class, 'pin_validate']);
+
+
+//Community
+Route::POST('/community/create', [CommunityController::class, 'create_community']);
