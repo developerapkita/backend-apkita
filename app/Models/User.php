@@ -44,6 +44,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserToken::class);
     }
+     public function userCommunity(): HasMany
+    {
+        return $this->hasMany(UserCommunity::class,'user_id','inviter_id','id');
+    }
     /**
      * The attributes that should be hidden for serialization.
      *
