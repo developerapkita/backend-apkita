@@ -104,6 +104,12 @@ class AuthController extends Controller
                 'status' => 'error',
                 'message' => $validator->messages()->first()
             ], 404);
+        }
+        $checkCurrentOTP = Otp::where('email',$request->email)->first();
+        if( $checkCurrentOTP !=null){
+            if(Date::now()->toDateTimeString() < $checkCurrentOTP->expired_at){
+                Otp::where('email',$request->email)->delete();
+            }
         }           
         
         $otp = new Otp();
