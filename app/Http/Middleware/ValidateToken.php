@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Models\UserToken;
+use Carbon\Carbon;
 class ValidateToken
 {
     /**
@@ -17,13 +18,17 @@ class ValidateToken
     public function handle(Request $request, Closure $next)
     {
         $token = $request->header("Authorization");
-        if(!$token || !Str::startsWith($token, 'Bearer ')){
+        if(!$token || !str_replace('Bearer ', '', $token)){
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-        $token = Str::substr($token, 7);
-        $user = UserToken::where('token', $token)->first();
+        $token_split = str_replace('Bearer ', '', $token);
+        $user = UserToken::where('token', $token_split)->first();
         if(!$user){
             return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $currentDateTime = Carbon::now();
+        if($user->expired_at < $currentDateTime) {
+            return response()->json(['message' => 'Token has expired'], 401);
         }
         return $next($request);
     }

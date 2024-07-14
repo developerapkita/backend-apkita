@@ -27,10 +27,10 @@ class ProfileService
      * @return \Illuminate\Database\Eloquent\Model The updated profile.
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the profile is not found.
      */
-    public function updateData($id, array $data)
+    public function updateData($slug, array $data)
     {
         // Find the profile by its ID
-        $user = Profile::findOrFail($id);
+        $user = Profile::where("slug",$slug)->first();
         // Update the profile with the given data
         $user->update($data);
         // Return the updated profile

@@ -18,11 +18,19 @@ use App\Models\Provinces;
 use App\Models\Regency;
 use App\Models\District;
 use App\Models\Profile;
+use App\Services\TokenService;
 use Mail;
 use App\Services\Whatsapp;
+use App\Services\ReferalService;
 
 class AuthController extends Controller
-{
+{       
+    protected $generateService;
+    protected $tokenService;
+    public function __construct(ReferalService $generateService,TokenService $tokenService){
+        $this->generateService = $generateService;
+        $this->tokenService = $tokenService;
+    }
     public function register(Request $request){
         $rules = [
             'email' => ['required'],
@@ -183,88 +191,51 @@ class AuthController extends Controller
             'username' => ['required'],
             'password' => ['required']
         ];
-
-        $validator = Validator::make($request->all(),$rules);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $validator->messages()->first()
-            ], 404);
-        }
-
-        $username = $request->username;
-        $password = $request->password;
-
-        $usermail = User::where('email',$username)->first();
-        $userphone = User::where('phone',$username)->first();
-        if($usermail != null){
-            $roleCheck = RoleAccount::where('id',$usermail->role)->first();
-            if($roleCheck == null){
+        try {
+            $validator = Validator::make($request->all(),$rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $validator->messages()->first()
+                ], 404);
+            }
+            $user = User::where('email', $request->username)
+            ->orWhere('phone', $request->username)
+            ->first();
+            if (!$user) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'invalid_user'
                 ], 404);
             }
-            if(Auth::attempt(['email'=> $username, 'password' => $password])){
-                $token = Str::random(40);
-                $userAuth = Auth::user();
-
-                $userToken = new UserToken();
-                $userToken->user_id = $usermail->id;
-                $userToken->token = $token;
-                $userToken->save();
-
-                $userAuth->token = $token;
-                if($userAuth->pin_transaction == null){
-                    return response()->json([
-                    'status' => 'success',
-                    'message'=> 'PIN Not Set',
-                    'data' =>  $userAuth
-                ], 200);
-                }
-                return response()->json([
-                    'status' => 'success',
-                    'data' =>  $userAuth
-                ], 200);
-            }
-        }else
-        if($userphone != null){
-            $roleCheck = RoleAccount::where('id',$userphone->role)->first();
-            if($roleCheck == null){
+            $roleCheck = RoleAccount::where("id", $user->role)->first();
+            if (!$roleCheck) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'invalid_user'
                 ], 404);
             }
-            if(Auth::attempt(['phone'=> $username, 'password' => $password])){
-                $token = Str::random(40);
+            if(Auth::attempt(['email'=> $request->username, 'password' => $request->password]) || Auth::attempt(['phone'=> $request->username, 'password' => $request->password])){
                 $userAuth = Auth::user();
-
-                $userToken = new UserToken();
-                $userToken->user_id = $userphone->id;
-                $userToken->token = $token;
-                $userToken->save();
-
-                $userAuth->token = $token;
+                $token = $this->tokenService->generate($userAuth->id);
                 if($userAuth->pin_transaction == null){
                     return response()->json([
-                    'status' => 'success',
-                    'message'=> 'PIN_Not_Set',
-                    'data' =>  $userAuth
-                ], 200);
+                        'status' => 'success',
+                        'message'=> 'PIN Not Set',
+                        'data' =>  $userAuth,
+                        'token' => $token
+                    ], 200);
                 }
+            }else{
                 return response()->json([
-                    'status' => 'success',
-                    'data' =>  $userAuth
-                ], 200);
+                    'status' => 'error',
+                    'message' => 'your username and password is wrong'
+                ], 404);
             }
-        }else{
-            return response()->json([
-                'status' => 'error',
-                'message' => 'invalid_username'
-            ], 404);
+        } catch (\Throwable $th) {
+            throw $th;
         }
-
+       
     }
     public function province(){
         $data = Provinces::get();
@@ -340,21 +311,22 @@ class AuthController extends Controller
                 'message' => $validator->messages()->first()
             ], 404);
         }
-        $profile = User::with('profile')->where('slug',$request->id)->first();
+        $profile = User::with('profile')->where('slug',$request->slug)->first();
+        $referal_code = $this->generateService->generate();
         $user = $profile->profile;
-
         $user->birth_date = $request->date_birth;
         $user->gender = $request->gender;
         $user->province = $request->province;
         $user->regencies = $request->regencies;
         $user->districts = $request->district;
         $user->address = $request->address;
+        $user->referal_code = $referal_code;
         $user->save();
 
         return response()->json([
             'status' => 'succcess',
             'message' => 'Success',
-            'data' => $profile
+            'data' => $user
         ], 404);
     }
     public function set_pin(Request $request){

@@ -26,9 +26,7 @@ class ProfileController extends Controller
     public function update($slug){
         try {
             $validate = request()->validate([
-                'name' => 'required',
-                'email' => 'required',
-                'phone' => 'required',
+                'nik' => 'required | numeric',
                 'gender' => 'required',
                 'birth_date' => 'required',
                 'province' => 'required',
@@ -36,10 +34,10 @@ class ProfileController extends Controller
                 'districts' => 'required',
                 'address' => 'required',
             ]);
-            
-            
+            $user = $this->profileService->updateData($slug, $validate);
+            return response()->json(["message" => "success", "data" => $user], 200);
         } catch (\Throwable $th) {
-            //throw $th;
+            throw $th;
         }
     }
 }

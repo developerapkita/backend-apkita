@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\ProfileController;
 */
 
 Route::middleware('auth:sanctum')->get('/v1/user', function (Request $request) {
-    return $request->user();
+    
 });
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -34,7 +34,11 @@ Route::POST('/set-pin', [AuthController::class, 'set_pin']);
 Route::POST('/pin-validate', [AuthController::class, 'pin_validate']);
 
 //ROUTING FOR PROFILE
-Route::get('/profile/{slug}',[ProfileController::class, 'show']);
+Route::middleware(['auth.token','auth.role:member'])->group(function () {
+    Route::get('/profile/{slug}', [ProfileController::class, 'show']);
+    Route::put('/profile/{slug}', [ProfileController::class, 'update']);
+});
+
 
 //Community
 Route::POST('/community/create', [CommunityController::class, 'create_community']);
