@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\ImportDataController;
-
+use App\Http\Controllers\Api\ProfileController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -17,7 +17,7 @@ use App\Http\Controllers\Api\ImportDataController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+Route::middleware('auth:sanctum')->get('/v1/user', function (Request $request) {
     return $request->user();
 });
 
@@ -33,6 +33,8 @@ Route::POST('/profile-complete', [AuthController::class, 'profile_complete']);
 Route::POST('/set-pin', [AuthController::class, 'set_pin']);
 Route::POST('/pin-validate', [AuthController::class, 'pin_validate']);
 
+//ROUTING FOR PROFILE
+Route::get('/profile/{slug}',[ProfileController::class, 'show']);
 
 //Community
 Route::POST('/community/create', [CommunityController::class, 'create_community']);
