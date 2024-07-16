@@ -4,7 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
+use App\Models\RoleAccount;
 class RoleCheck
 {
     /**
@@ -16,8 +17,14 @@ class RoleCheck
      */
     public function handle(Request $request, Closure $next, ...$roles)
     {
-        $user = $request->user();
-        return response()->json(['message' => $user]);
-        // return $next($request);
+        $user = Auth::user(); 
+       
+        $role = RoleAccount::where("id", $user->role)->first();
+       
+        $role = RoleAccount::where('id', $user->role)->first();
+        if (!in_array($role->name_role, $roles)) {
+            return redirect('/');
+        }
+        return $next($request);
     }
 }
