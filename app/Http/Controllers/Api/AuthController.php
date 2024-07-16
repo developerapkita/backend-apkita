@@ -39,9 +39,7 @@ class AuthController extends Controller
             'password' => ['required'],
             'otp'=>['required'],
         ];
-
         $validator = Validator::make($request->all(), $rules);
-
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -49,55 +47,41 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $name = $request->name;
-        $email = $request->email;
-        $phone = $request->phone;
-        $user = User::where('email',$email)->where('phone',$phone)->first();
-        if ($user != null) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'email or phone allready exist'
-            ], 404);
-        }
-        $password = $request->password;
+        $user = User::where('email',$request->email)->where('phone',$request->phone)->first();
+        $user != null ? response()->json(['status' => 'error', 'message' => 'email or phone already exist'], 404): null;
         $role = RoleAccount::where('name_role',$request->role)->first();
-        $referalCheck = Profile::where('referal_code',$request->referal_code)->first();
-        if($referalCheck == null){
-            $referal_code = null;
-        }else{
-            $referal_code = $request->referal_code;
-        }
-        DB::beginTransaction();
+        $referal_check = Profile::where('referal_code',$request->referal_code)->first();
         try {
             $account = new User();
-            $account->name         = $name;
-            $account->email        = $email;
-            $account->phone        = $phone;
+            $account->name         = $request->name;
+            $account->email        = $request->email;
+            $account->phone        = $request->phone;
             $account->email_verified_at = Date::now();
-            $account->password     = Hash::make($password);
+            $account->password     = Hash::make($request->password);
             $account->role         = $role->id;
             $account->status       = 1;
             $account->save();
 
             $profile = new Profile();
             $profile->user_id = $account->id;
-            $profile->referal_code_inviter = $referal_code;
+            $profile->referal_code_inviter = $referal_check == null ? null : $request->referal_code;
             $profile->save();
-
-            DB::commit();
+            return response()->json([
+                'status' => 'success',
+                'data' => $account
+            ], 200);
+        //     Otp::where('otp',$request->otp)->delete();
+        //     return response()->json([
+        //        'status' => 'success',
+        //        'message' => 'Success'
+        //    ], 200);
         } catch (\Exception $e) {
-            DB::rollback();
-
             return response()->json([
                 'status' => 'error',
                 'message' => 'internal_error'
             ], 500);
         }
-        Otp::where('otp',$request->otp)->delete();
-         return response()->json([
-            'status' => 'success',
-            'message' => 'Success'
-        ], 200);
+  
     }
     public function otp_send(Request $request){ 
         $rules = [
@@ -208,22 +192,16 @@ class AuthController extends Controller
                     'message' => 'invalid_user'
                 ], 404);
             }
-            $roleCheck = RoleAccount::where("id", $user->role)->first();
-            if (!$roleCheck) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'invalid_user'
-                ], 404);
-            }
             if(Auth::attempt(['email'=> $request->username, 'password' => $request->password]) || Auth::attempt(['phone'=> $request->username, 'password' => $request->password])){
-                $userAuth = Auth::user();
-                $token = $this->tokenService->generate($userAuth->id);
-                if($userAuth->pin_transaction == null){
+                $user_auth = Auth::user();
+                $token = $user_auth->createToken('auth_token', ['*'], now()->addMinutes(60));
+                if($user_auth->pin_transaction == null){
                     return response()->json([
                         'status' => 'success',
                         'message'=> 'PIN Not Set',
-                        'data' =>  $userAuth,
-                        'token' => $token
+                        'token' => $token->plainTextToken,
+                        'type_token'=>"Bearer",
+                        'expires_at'=>$token->accessToken->expires_at
                     ], 200);
                 }
             }else{
@@ -261,40 +239,6 @@ class AuthController extends Controller
             'data'=>$data
         ]);
     }
-    public function token_validate(Request $request)
-    {
-        $token = $request->header('Token');
-        if ($token == null) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'required_token'
-            ], 404);
-        }
-        $userToken = UserToken::where('token', $token)->where('expired', '!=', 1)->first();
-        if ($userToken == null) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'invalid_token'
-            ], 404);
-        }
-        $expiredToken =  UserToken::where("user_id",  $userToken->user_id)
-            ->update(["expired" => 1]);
-        $token =  Str::random(40);
-        $user = User::with('profile')->where('id',$userToken->user_id)->first();;
-
-        $userToken = new UserToken();
-        $userToken->user_id = $user->id;
-        $userToken->token = $token;
-        $userToken->save();
-
-        $user->token = $token;
-
-        return response()->json([
-            'status' => 'success',
-            'data' =>  $user
-        ], 200);
-    }
-
     public function profile_complete(Request $request){
         $rules = [
             'date_birth'=> ['required'],
@@ -312,7 +256,6 @@ class AuthController extends Controller
             ], 404);
         }
         $profile = User::with('profile')->where('slug',$request->slug)->first();
-        $referal_code = $this->generateService->generate();
         $user = $profile->profile;
         $user->birth_date = $request->date_birth;
         $user->gender = $request->gender;
@@ -320,13 +263,13 @@ class AuthController extends Controller
         $user->regencies = $request->regencies;
         $user->districts = $request->district;
         $user->address = $request->address;
-        $user->referal_code = $referal_code;
+        $user->referal_code = $this->generateService->generate();
         $user->save();
 
         return response()->json([
             'status' => 'succcess',
             'message' => 'Success',
-            'data' => $user
+            'data' => $profile
         ], 404);
     }
     public function set_pin(Request $request){
