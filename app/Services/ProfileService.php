@@ -19,6 +19,9 @@ class ProfileService
         $user = User::with('profile')->where('slug', $slug)->firstOrFail();
         return $user;
     }
+    public function createData(array $data){
+        return Profile::create($data);
+    }
     /**
      * Update a profile by its ID.
      *
@@ -27,7 +30,7 @@ class ProfileService
      * @return \Illuminate\Database\Eloquent\Model The updated profile.
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If the profile is not found.
      */
-    public function updateData($slug, array $data)
+    public function updateData(string $slug, array $data)
     {
         // Find the profile by its ID
         $user = Profile::where("slug",$slug)->first();
