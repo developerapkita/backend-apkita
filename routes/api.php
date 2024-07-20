@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\ImportDataController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\PlaceController;
+use App\Http\Controllers\Api\EventController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -21,23 +23,30 @@ use App\Http\Controllers\Api\ProfileController;
     
 // });
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/otp-send', [AuthController::class, 'otp_send']);
-Route::post('/otp-verification', [AuthController::class, 'otp_verification']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/data-province', [AuthController::class, 'province']);
-Route::get('/data-regency', [AuthController::class, 'regency']);
-Route::get('/data-district', [AuthController::class, 'district']);
-Route::POST('/token_validate', [AuthController::class, 'token_validate']);
-Route::POST('/profile-complete', [AuthController::class, 'profile_complete']);
-Route::POST('/set-pin', [AuthController::class, 'set_pin']);
-Route::POST('/pin-validate', [AuthController::class, 'pin_validate']);
+Route::post('/v1/register', [AuthController::class, 'register']);
+Route::post('/v1/otp-send', [AuthController::class, 'otp_send']);
+Route::post('/v1/otp-verification', [AuthController::class, 'otp_verification']);
+Route::post('/v1/login', [AuthController::class, 'login']);
+Route::POST('/v1/token_validate', [AuthController::class, 'token_validate']);
+Route::POST('/v1/profile-complete/{slug}', [AuthController::class, 'profile_complete']);
+Route::POST('/v1/set-pin', [AuthController::class, 'set_pin']);
+Route::POST('/v1/pin-validate', [AuthController::class, 'pin_validate']);
+
+Route::get('/v1/data-province', [PlaceController::class, 'getProvince']);
+Route::get('/v1/data-regency/{provinceCode}', [PlaceController::class, 'getRegenciesByProvinceCode']);
+Route::get('/v1/data-district/{regencyCode}', [PlaceController::class, 'getDistrictByRegencyCode']);
 
 //ROUTING FOR PROFILE
-Route::middleware(['auth:sanctum','rolecheck:member'])->group(function () {
+Route::middleware(['auth:sanctum','rolecheck:member'])->prefix('/v1')->group(function () {
     Route::get('/profile/{slug}', [ProfileController::class, 'show']);
     Route::put('/profile/{slug}', [ProfileController::class, 'update']);
-    Route::POST('/community/create', [CommunityController::class, 'create_community']);
+
+    Route::post('/community/create', [CommunityController::class, 'create_community']);
+
+    Route::post('/event', [EventController::class, 'create']);
+    Route::get("/event/{slug}",[EventController::class, 'show']);
+    Route::put("/event/{slug}",[EventController::class, 'update']);
+    Route::delete("/event/{slug}",[EventController::class, 'destroy']);
 });
 
 
