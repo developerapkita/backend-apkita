@@ -13,7 +13,7 @@ class Community extends Model
 
     protected $fillable = [
         'invitation_code',
-        'name_community',
+        'name',
         'image',
         'description',
         'address',
@@ -23,6 +23,9 @@ class Community extends Model
     public function userCommunity() : HasMany
     {
          return $this->hasMany(UserCommunity::class, 'community_id');
+    }
+    public function eventCommunity() : HasMany{
+        return $this->hasMany(Event::class, 'community_id');
     }
 
 }
