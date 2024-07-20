@@ -14,22 +14,25 @@ use App\Models\User;
 use App\Models\RoleAccount;
 use App\Models\Otp;
 use App\Models\UserToken;
-use App\Models\Provinces;
-use App\Models\Regency;
-use App\Models\District;
 use App\Models\Profile;
 use App\Services\TokenService;
 use Mail;
 use App\Services\Whatsapp;
 use App\Services\ReferalService;
+use App\Services\AuthService;
+use App\Services\ProfileService;
 
 class AuthController extends Controller
 {       
     protected $generateService;
     protected $tokenService;
-    public function __construct(ReferalService $generateService,TokenService $tokenService){
+    protected $authService;
+    protected $profileService;
+    public function __construct(ReferalService $generateService,TokenService $tokenService, AuthService $authService, ProfileService $profileService) {
         $this->generateService = $generateService;
         $this->tokenService = $tokenService;
+        $this->authService = $authService;
+        $this-> profileService = $profileService;
     }
     public function register(Request $request){
         $rules = [
@@ -46,30 +49,23 @@ class AuthController extends Controller
                 'message' => $validator->messages()->first()
             ], 404);
         }
-
         $user = User::where('email',$request->email)->where('phone',$request->phone)->first();
-        $user != null ? response()->json(['status' => 'error', 'message' => 'email or phone already exist'], 404): null;
+        if($user != null){ return response()->json(['status' => 'error', 'message' => 'email or phone already exist'], 404); }
         $role = RoleAccount::where('name_role',$request->role)->first();
-        $referal_check = Profile::where('referal_code',$request->referal_code)->first();
+        $referalCheck = Profile::where('referal_code',$request->referal_code)->first();
         try {
-            $account = new User();
-            $account->name         = $request->name;
-            $account->email        = $request->email;
-            $account->phone        = $request->phone;
-            $account->email_verified_at = Date::now();
-            $account->password     = Hash::make($request->password);
-            $account->role         = $role->id;
-            $account->status       = 1;
-            $account->save();
+            $auth = $this->authService->register($request->all(), $role->id);
+            $profileData = [
+                'user_id' => $auth->id,
+                'referal_code_inviter' => $referalCheck == null ? null : $request->referal_code,
+            ];
+            $profile = $this->profileService->createData($profileData);
 
-            $profile = new Profile();
-            $profile->user_id = $account->id;
-            $profile->referal_code_inviter = $referal_check == null ? null : $request->referal_code;
-            $profile->save();
             return response()->json([
                 'status' => 'success',
-                'data' => $account
+                'data' => $auth
             ], 200);
+
         //     Otp::where('otp',$request->otp)->delete();
         //     return response()->json([
         //        'status' => 'success',
@@ -215,62 +211,33 @@ class AuthController extends Controller
         }
        
     }
-    public function province(){
-        $data = Provinces::get();
-        return response()->json([
-            'status'=>'success',
-            'message'=>'success',
-            'data'=>$data
-        ]);
-    }
-    public function regency(Request $request){
-        $data = Regency::where('province_code',$request->province_code)->get();
-        return response()->json([
-            'status'=>'success',
-            'message'=>'success',
-            'data'=>$data
-        ]);
-    }
-    public function district(Request $request){
-        $data = District::where('regency_code',$request->regency_code)->get();
-        return response()->json([
-            'status'=>'success',
-            'message'=>'success',
-            'data'=>$data
-        ]);
-    }
-    public function profile_complete(Request $request){
+    public function profile_complete(Request $request, $slug){
         $rules = [
-            'date_birth'=> ['required'],
+            'birth_date'=> ['required'],
             'gender'=> ['required'],
             'province'=> ['required'],
             'regencies'=> ['required'],
-            'district'=> ['required'],
+            'districts'=> ['required'],
             'address'=> ['required'],
         ];
-        $validator = Validator::make($request->all(),$rules);
-        if ($validator->fails()) {
+        try {
+            $validator = Validator::make($request->all(),$rules);
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $validator->messages()->first()
+                ], 404);
+            }
+            $profile = $this->profileService->updateData($slug, $request->all());
             return response()->json([
-                'status' => 'error',
-                'message' => $validator->messages()->first()
+                'status' => 'succcess',
+                'message' => 'Success',
+                'data' => $profile
             ], 404);
+        } catch (\Throwable $th) {
+            throw $th;
         }
-        $profile = User::with('profile')->where('slug',$request->slug)->first();
-        $user = $profile->profile;
-        $user->birth_date = $request->date_birth;
-        $user->gender = $request->gender;
-        $user->province = $request->province;
-        $user->regencies = $request->regencies;
-        $user->districts = $request->district;
-        $user->address = $request->address;
-        $user->referal_code = $this->generateService->generate();
-        $user->save();
-
-        return response()->json([
-            'status' => 'succcess',
-            'message' => 'Success',
-            'data' => $profile
-        ], 404);
+      
     }
     public function set_pin(Request $request){
         $rules = [
