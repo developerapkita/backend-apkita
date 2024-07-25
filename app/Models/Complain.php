@@ -12,6 +12,7 @@ class Complain extends Model
         'community_id',
         'user_id',
         'detail',
+        'reply',
         'status',
     ];
     
