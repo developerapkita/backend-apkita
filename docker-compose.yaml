@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-apkita
+    ports:
+      - "8004:9000" # Port 8003 di host memetakan ke port 9000 di dalam kontainer
+    volumes:
+      - .:/var/www/api-apkita
+    depends_on:
+      - db
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: apkita
+      MYSQL_USER: newuser
+      MYSQL_PASSWORD: newpassword
+    volumes:
+      - db_data:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pmaapkita
+    ports:
+      - "8080:80" # Port 8080 di host memetakan ke port 80 di dalam kontainer
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306 # Port MySQL di dalam kontainer
+    depends_on:
+      - db
+volumes:
+  db_data:
