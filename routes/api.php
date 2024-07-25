@@ -40,14 +40,15 @@ Route::get('/v1/data-district/{regencyCode}', [PlaceController::class, 'getDistr
 Route::middleware(['auth:sanctum','rolecheck:member'])->prefix('/v1')->group(function () {
     Route::get('/profile/{slug}', [ProfileController::class, 'show']);
     Route::put('/profile/{slug}', [ProfileController::class, 'update']);
-
     Route::post('/community/create', [CommunityController::class, 'create_community']);
 
     Route::post('/event', [EventController::class, 'create']);
     Route::get("/event/{slug}",[EventController::class, 'show']);
+
+});
+Route::middleware(['auth:sanctum','rolecheck:admin,manager'])->prefix('/v1')->group(function () {
     Route::put("/event/{slug}",[EventController::class, 'update']);
     Route::delete("/event/{slug}",[EventController::class, 'destroy']);
 });
-
 
 //Community
