@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ImportDataController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\ComplainController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -44,6 +45,12 @@ Route::middleware(['auth:sanctum','rolecheck:member'])->prefix('/v1')->group(fun
 
     Route::post('/event', [EventController::class, 'create']);
     Route::get("/event/{slug}",[EventController::class, 'show']);
+
+
+    Route::get("/complain/{slug}",[ComplainController::class, 'show']);
+    Route::post("/complain",[ComplainController::class, 'create']);
+    Route::put("/complain/{slug}",[ComplainController::class, 'update']);
+    Route::delete("/complain/{slug}",[ComplainController::class, 'delete']);
 
 });
 Route::middleware(['auth:sanctum','rolecheck:admin,manager'])->prefix('/v1')->group(function () {
