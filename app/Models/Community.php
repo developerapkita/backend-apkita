@@ -28,4 +28,8 @@ class Community extends Model
         return $this->hasMany(Event::class, 'community_id');
     }
 
+    public function complainCommunity() : HasMany{
+        return $this->hasMany(Complain::class, 'community_id');
+    }
+
 }
