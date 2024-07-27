@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PlaceController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\ComplainController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -38,24 +39,26 @@ Route::get('/v1/data-regency/{provinceCode}', [PlaceController::class, 'getRegen
 Route::get('/v1/data-district/{regencyCode}', [PlaceController::class, 'getDistrictByRegencyCode']);
 
 //ROUTING FOR PROFILE
-Route::middleware(['auth:sanctum','rolecheck:member'])->prefix('/v1')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('/v1')->group(function () {
     Route::get('/profile/{slug}', [ProfileController::class, 'show']);
     Route::put('/profile/{slug}', [ProfileController::class, 'update']);
     Route::post('/community/create', [CommunityController::class, 'create_community']);
 
-    Route::post('/event', [EventController::class, 'create']);
-    Route::get("/event/{slug}",[EventController::class, 'show']);
+    Route::middleware(['rolecheck:member'])->group(function () {
+        Route::get("/complain/{slug}",[ComplainController::class, 'show']);
+        Route::post("/complain",[ComplainController::class, 'create']);
+        Route::put("/complain/{slug}",[ComplainController::class, 'update']);
+        Route::delete("/complain/{slug}",[ComplainController::class, 'delete']);
+    });
+    Route::middleware(['rolecheck:admin,manager'])->group(function () {
+        Route::post('/event', [EventController::class, 'create']);
+        Route::get("/event/{slug}",[EventController::class, 'show']);
+        Route::put("/event/{slug}",[EventController::class, 'update']);
+        Route::delete("/event/{slug}",[EventController::class, 'destroy']);
+    
+        Route::put("/complain/{slug}",[ComplainController::class, 'replyData']);
+    });
 
-
-    Route::get("/complain/{slug}",[ComplainController::class, 'show']);
-    Route::post("/complain",[ComplainController::class, 'create']);
-    Route::put("/complain/{slug}",[ComplainController::class, 'update']);
-    Route::delete("/complain/{slug}",[ComplainController::class, 'delete']);
-
-});
-Route::middleware(['auth:sanctum','rolecheck:admin,manager'])->prefix('/v1')->group(function () {
-    Route::put("/event/{slug}",[EventController::class, 'update']);
-    Route::delete("/event/{slug}",[EventController::class, 'destroy']);
 });
 
 //Community

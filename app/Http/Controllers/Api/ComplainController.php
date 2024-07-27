@@ -94,6 +94,23 @@ class ComplainController extends Controller
             ],500);
         }
    }
+   public function replyComplain(Request $request, $slug){
+        try {
+            $validatedData = $request->validate([
+                'reply' => 'required',
+            ]);
+            $complain = $this->complainService->updateData($slug, $validatedData);
+            return response()->json([
+                'status' => 'success',
+                'data' => $validatedData
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $th
+            ],500);
+        }
 
+   }
     
 }
