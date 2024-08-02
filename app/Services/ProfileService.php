@@ -32,8 +32,19 @@ class ProfileService
      */
     public function updateData(string $slug, array $data)
     {
+        
         // Find the profile by its ID
-        $user = Profile::where("slug",$slug)->first();
+        $user = Profile::join('users','users.id','profiles.user_id')->where("users.slug",$slug)->first();
+        // Update the profile with the given data
+        $user->update($data);
+        // Return the updated profile
+        return $user;
+    }
+    public function completeData(string $slug, array $data)
+    {
+        
+        // Find the profile by its ID
+        $user = Profile::join('users','users.id','profiles.user_id')->where("users.slug",$slug)->first();
         // Update the profile with the given data
         $user->update($data);
         // Return the updated profile

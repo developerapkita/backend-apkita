@@ -26,8 +26,7 @@ class ProfileController extends Controller
     public function update($slug){
         try {
             $validate = request()->validate([
-                'nik' => 'required | numeric',
-                'gender' => 'required',
+                'name'=>'required',
                 'birth_date' => 'required',
                 'province' => 'required',
                 'regencies' => 'required',

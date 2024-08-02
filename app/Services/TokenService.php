@@ -34,7 +34,7 @@ class TokenService
         // Set the user ID, token, and expiration date
         $userToken->user_id = $id;
         $userToken->token = $token;
-        $userToken->expired_at = $expiresAt;
+        $userToken->expires_at = $expiresAt;
         // Save the user token to the database
         $userToken->save();
         // Return the generated token

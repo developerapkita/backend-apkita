@@ -24,9 +24,9 @@ class CommunityController extends Controller
         $this->communityService = $communityService;
         $this->usercomService = $usercomService;
     }
-    public function create_community(Request $request){
+    public function create_community(Request $request, $slug){
         
-        $user = $this->authService->userBySlug($request->slug);
+        $user = $this->authService->userBySlug($slug);
         $rules = [
             'name'=>['required'],
             'description'=>['required'],
@@ -60,6 +60,45 @@ class CommunityController extends Controller
                 "responded_at" => Date::now()
             ];
             $create_usercom = $this->usercomService->createUserCommunity($user_community);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Success',
+                'data' => $create_usercom
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => 'error',
+                'message' => $e
+            ], 500);
+        }
+    }
+    public function check_community($id){
+        $community = Community::where('invitation_code',$id)->first();
+        if($community ==null){
+             return response()->json([
+                'status' => 'error',
+                'message' => 'invalid_code'
+            ], 404);
+        }
+         return response()->json([
+                'status' => 'success',
+                'message' => 'Success',
+                'data' => $community
+            ], 200);
+    }
+    public function join_community_qr($id,$inviter,$slug){
+        $user = $this->authService->userBySlug($slug);
+        $inviters = $this->authService->userBySlug($inviter);
+        $community = Community::where('invitation_code',$id)->first();
+        try {
+            $data=[
+                'inviter_id'=> $inviters->id,
+                'user_id'=>$user->id,
+                'community_id'=>$community->id,
+                'role'=>'member'
+            ];
+            $create_usercom = $this->usercomService->createDataCommunity($data);
             return response()->json([
                 'status' => 'success',
                 'message' => 'Success',

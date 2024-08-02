@@ -30,19 +30,26 @@ Route::post('/v1/otp-send', [AuthController::class, 'otp_send']);
 Route::post('/v1/otp-verification', [AuthController::class, 'otp_verification']);
 Route::post('/v1/login', [AuthController::class, 'login']);
 Route::POST('/v1/token_validate', [AuthController::class, 'token_validate']);
-Route::POST('/v1/profile-complete/{slug}', [AuthController::class, 'profile_complete']);
-Route::POST('/v1/set-pin', [AuthController::class, 'set_pin']);
-Route::POST('/v1/pin-validate', [AuthController::class, 'pin_validate']);
 
 Route::get('/v1/data-province', [PlaceController::class, 'getProvince']);
 Route::get('/v1/data-regency/{provinceCode}', [PlaceController::class, 'getRegenciesByProvinceCode']);
 Route::get('/v1/data-district/{regencyCode}', [PlaceController::class, 'getDistrictByRegencyCode']);
 
-//ROUTING FOR PROFILE
+
 Route::middleware(['auth:sanctum'])->prefix('/v1')->group(function () {
+    //ROUTING FOR Auth
+    Route::POST('/profile-complete/{slug}', [AuthController::class, 'profile_complete']);
+    Route::POST('/set-pin/{id}', [AuthController::class, 'set_pin']);
+    Route::POST('/pin-validate/{id}', [AuthController::class, 'pin_validate']);
+    Route::POST('/update-pin/{slug}', [AuthController::class, 'update_pin']);
+    Route::POST('/update-password/{slug}', [AuthController::class, 'update_password']);
+    //ROUTING FOR PROFILE
     Route::get('/profile/{slug}', [ProfileController::class, 'show']);
     Route::put('/profile/{slug}', [ProfileController::class, 'update']);
-    Route::post('/community/create', [CommunityController::class, 'create_community']);
+    Route::post('/community/create/{slug}', [CommunityController::class, 'create_community']);
+    Route::get('/community/{id}', [CommunityController::class, 'check_community']);
+    Route::POST('/community/{id}/{inviter}/{slug}', [CommunityController::class, 'join_community_qr']);
+
 
     Route::middleware(['rolecheck:member'])->group(function () {
         Route::get("/complain/{slug}",[ComplainController::class, 'show']);

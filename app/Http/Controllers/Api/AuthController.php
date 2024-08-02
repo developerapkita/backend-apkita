@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Date;
 use App\Models\User;
 use App\Models\RoleAccount;
 use App\Models\Otp;
+use Carbon\Carbon;
 use App\Models\UserToken;
 use App\Models\Profile;
 use App\Services\TokenService;
@@ -190,14 +191,24 @@ class AuthController extends Controller
             }
             if(Auth::attempt(['email'=> $request->username, 'password' => $request->password]) || Auth::attempt(['phone'=> $request->username, 'password' => $request->password])){
                 $user_auth = Auth::user();
-                $token = $user_auth->createToken('auth_token', ['*'], now()->addMinutes(60));
+                $token = $user_auth->createToken('auth_token', ['*'], Carbon::now()->addMinutes(60));
                 if($user_auth->pin_transaction == null){
                     return response()->json([
                         'status' => 'success',
-                        'message'=> 'PIN Not Set',
+                        'message'=> 'PIN_Not_Set',
                         'token' => $token->plainTextToken,
                         'type_token'=>"Bearer",
-                        'expires_at'=>$token->accessToken->expires_at
+                        'expires_at'=>$token->accessToken->expires_at,
+                        'slug'=> $user_auth->slug,
+                    ], 200);
+                }else{
+                    return response()->json([
+                        'status' => 'success',
+                        'message'=> 'PIN_ready',
+                        'token' => $token->plainTextToken,
+                        'type_token'=>"Bearer",
+                        'expires_at'=>$token->accessToken->expires_at,
+                        'slug'=> $user_auth->slug,
                     ], 200);
                 }
             }else{
@@ -239,7 +250,7 @@ class AuthController extends Controller
         }
       
     }
-    public function set_pin(Request $request){
+    public function set_pin(Request $request,$id){
         $rules = [
             'pin'=> ['required'],
         ];
@@ -251,7 +262,7 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $user = User::where('slug',$request->id)->first();
+        $user = User::where('slug',$id)->first();
         $user->pin_transaction = Hash::make($request->pin);
         $user->save();
         return response()->json([
@@ -260,7 +271,7 @@ class AuthController extends Controller
             'data' => $user
         ], 200);
     }
-    public function pin_validate(Request $request){
+    public function pin_validate(Request $request,$id){
         $rules = [
             'pin'=> ['required'],
         ];
@@ -272,7 +283,7 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $user = User::where('slug',$request->id)->first();
+        $user = User::where('slug',$id)->first();
         if(Hash::check($request->pin,$user->pin_transaction)==false){
             return response()->json([
              'status' => 'error',
@@ -284,5 +295,61 @@ class AuthController extends Controller
              'message' => 'pin_valid',
              'data' => $user
         ], 404);
+    }
+    public function update_pin(Request $request,$slug){
+        $rules = [
+            'pin'=> ['required'],
+            'old_pin'=> ['required']
+        ];
+        $validator = Validator::make($request->all(),$rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->messages()->first()
+            ], 404);
+        }
+        $user = User::where('slug',$slug)->first();
+        if(Hash::check($request->old_pin,$user->pin_transaction)==false){
+            return response()->json([
+             'status' => 'error',
+             'message' => 'old_pin_invalid',
+        ], 404);
+        }
+        $user->pin_transaction = Hash::make($request->pin);
+        $user->save();
+        return response()->json([
+            'status' => 'succcess',
+            'message' => 'Success',
+            'data' => $user
+        ], 200);
+    
+    }
+    public function update_password(Request $request,$slug){
+        $rules = [
+            'password'=> ['required'],
+            'old_password'=> ['required']
+        ];
+        $validator = Validator::make($request->all(),$rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->messages()->first()
+            ], 404);
+        }
+        $user = User::where('slug',$slug)->first();
+        if(Hash::check($request->old_password,$user->password)==false){
+            return response()->json([
+             'status' => 'error',
+             'message' => 'old_password_invalid',
+        ], 404);
+        }
+        $user->password = Hash::make($request->password);
+        $user->save();
+        return response()->json([
+            'status' => 'succcess',
+            'message' => 'Success',
+            'data' => $user
+        ], 200);
+    
     }
 }
