@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 return new class extends Migration
 {
@@ -14,16 +15,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('events', function (Blueprint $table) {
-            $table->id();
+        Schema::create('event_comments', function (Blueprint $table) {
+            $table->id('id');
             $table->uuid('slug')->unique()->default(DB::raw('(UUID())'));
-            $table->integer('community_id');
-            $table->string('name')->nullable();
-            $table->text('description')->nullable();
-            $table->text("rsvp")->nullable();
-            $table->timestamp('start_date')->nullable();
-            $table->timestamp('end_date')->nullable();
-            $table->boolean('status')->default(0);
+            $table->integer('event_id');
+            $table->integer('user_id');
+            $table->text('comments');
+            $table->dateTime('date_post')->default(Carbon::now());
             $table->timestamps();
         });
     }
@@ -35,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('events');
+        Schema::dropIfExists('event_comments');
     }
 };
