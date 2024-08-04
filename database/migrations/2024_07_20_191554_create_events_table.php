@@ -20,10 +20,10 @@ return new class extends Migration
             $table->integer('community_id');
             $table->string('name')->nullable();
             $table->text('description')->nullable();
-            $table->text("rsvp")->nullable();
-            $table->timestamp('start_date')->nullable();
-            $table->timestamp('end_date')->nullable();
-            $table->boolean('status')->default(0);
+            $table->boolean("rsvp")->default(0);
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('end_date')->nullable();
+            $table->enum('status',['open','closed'])->default('open');
             $table->timestamps();
         });
     }
