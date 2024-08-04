@@ -58,6 +58,7 @@ class Kernel extends HttpKernel
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'tokencheck' => \App\Http\Middleware\ValidateToken::class,
         'rolecheck' => \App\Http\Middleware\RoleCheck::class,
+        'rolegroupcheck' => \App\Http\Middleware\RoleGroupCheck::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
