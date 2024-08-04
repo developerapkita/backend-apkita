@@ -58,6 +58,7 @@ class AuthController extends Controller
             $auth = $this->authService->register($request->all(), $role->id);
             $profileData = [
                 'user_id' => $auth->id,
+                'referal_code' => $this->generateService->generate(3,4),
                 'referal_code_inviter' => $referalCheck == null ? null : $request->referal_code,
             ];
             $profile = $this->profileService->createData($profileData);
@@ -67,11 +68,11 @@ class AuthController extends Controller
                 'data' => $auth
             ], 200);
 
-        //     Otp::where('otp',$request->otp)->delete();
-        //     return response()->json([
-        //        'status' => 'success',
-        //        'message' => 'Success'
-        //    ], 200);
+            Otp::where('otp',$request->otp)->delete();
+            return response()->json([
+               'status' => 'success',
+               'message' => 'Success'
+           ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
