@@ -112,4 +112,19 @@ class CommunityController extends Controller
             ], 500);
         }
     }
+    public function show_community($slug_user){
+        $community = $this->communityService->showDataCommunity($slug_user);
+        if($community == null){
+            return response()->json([
+            'status' => 'success',
+            'message' => 'community_not_ready',
+            'data' => $community
+        ], 200);
+        }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'community_ready',
+            'data' => $community
+        ], 200);
+    }
 }
