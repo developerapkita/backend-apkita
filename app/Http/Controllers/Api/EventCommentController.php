@@ -8,12 +8,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\EventCommentService;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class EventCommentController extends Controller
 {
-     protected $eventCommentService;
+    protected $eventCommentService;
     public function __construct(EventCommentService $eventCommentService){
-        $this->$eventCommentService = $eventCommentService;
+        $this->eventCommentService = $eventCommentService;
     }
     /**
      * Display a listing of the resource.
@@ -33,7 +34,6 @@ class EventCommentController extends Controller
     public function create(Request $request,$id,$slug)
     {
         $event = Event::where('slug',$slug)->first();
-        $user = User::where('id',$id)->first();
         $rules = [
             'comments'=>['required']
         ];
@@ -46,11 +46,11 @@ class EventCommentController extends Controller
         }
         try {
             $data = [
-                'user_id'=>$user->id,
+                'user_id'=>$id,
                 'event_id'=>$event->id,
                 'comments'=>$request->comments
             ];
-            $comment =  $this->$eventCommentService->createEventComment($data);
+            $comment =  $this->eventCommentService->createEventComment($data);
             return response()->json([
                 'status' => 'success',
                 'message' => 'Success',
@@ -84,9 +84,15 @@ class EventCommentController extends Controller
      * @param  \App\Models\EventComment  $eventComment
      * @return \Illuminate\Http\Response
      */
-    public function show(EventComment $eventComment)
+    public function show($slug)
     {
-        //
+        $show = $this->eventCommentService->getEventComment($slug);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Success',
+            'data' => $show
+        ], 200); 
+
     }
 
     /**

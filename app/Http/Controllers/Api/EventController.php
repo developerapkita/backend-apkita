@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\EventService;
+use Illuminate\Support\Facades\Validator;
+use App\Models\User;
+use App\Models\Community;
+use Illuminate\Support\Facades\Auth;
 class EventController extends Controller
 {
     protected $eventService;
-    public function __construct(EventService $eventService){
+    public function __construct(EventService $eventService,){
         $this->eventService = $eventService;
     }
     /**
@@ -28,7 +32,30 @@ class EventController extends Controller
      */
     public function create(Request $request)
     {
-        $createData = $this->eventService->createEvent($request->all());
+        $rules =[
+            'community_id'=>['required'],
+            'name'=>['required'],
+            'description'=>['required'],
+            'start_date'=>['required'],
+            'end_date'=>['required'],
+            'rsvp'=>['required'],
+        ];
+        $validator = Validator::make($request->all(),$rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->messages()->first()
+            ], 404);
+        }
+        $data = [
+            'community_id'=>$request->community_id,
+            'name'=>$request->name,
+            'description'=>$request->description,
+            'start_date'=>$request->start_date,
+            'end_date'=>$request->end_date,
+            'rsvp'=>$request->rsvp,
+        ];
+        $createData = $this->eventService->createEvent($data);
         return response()->json(['status' => 'success', 'data' => $createData], 200);
     }
 
@@ -49,9 +76,16 @@ class EventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($slug)
+    public function showByUser($slug)
     {
-        $event = $this->eventService->getEventBySlug($slug);
+        $user = User::where('slug',$slug)->first();
+        $event = $this->eventService->getEventByUser($user->id);
+        return response()->json(['status' => 'success', 'data' => $event], 200);
+    }
+    public function showByGroup($slug)
+    {
+        $community = Community::where('slug',$slug)->first();
+        $event = $this->eventService->getEventByGroup($community->id);
         return response()->json(['status' => 'success', 'data' => $event], 200);
     }
     /**
@@ -63,7 +97,28 @@ class EventController extends Controller
      */
     public function update(Request $request, $slug)
     {
-        $data = $this->eventService->updateEvent($slug,$request->all());
+        $rules = [
+            'name'=>['required'],
+            'description'=>['required'],
+            'start_date'=>['required'],
+            'end_date'=>['required'],
+            'rsvp'=>['required'],
+        ];
+        $validator = Validator::make($request->all(),$rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->messages()->first()
+            ], 404);
+        }
+        $data = [
+            'name'=>$request->name,
+            'description'=>$request->description,
+            'start_date'=>$request->start_date,
+            'end_date'=>$request->end_date,
+            'rsvp'=>$request->rsvp,
+        ];
+        $update = $this->eventService->updateEvent($slug,$data);
         return response()->json(['status' => 'success', 'message'=>"Data updated successfully."], 200);
     }
 
